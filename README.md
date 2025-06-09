@@ -1,5 +1,5 @@
 # apz-kovalevych-daniil  
-PZPI-22-1  
+ПЗПІ-22-9
 Ковалевич Данііл  
 Патерн проєктування ПЗ: Factory Method  
 Патерн проєктування ПЗ: Observer  
