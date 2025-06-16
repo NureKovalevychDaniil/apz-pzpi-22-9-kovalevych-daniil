@@ -1,0 +1,167 @@
+Міністерство освіти і науки України
+Харківський національний університет радіоелектроніки
+
+Кафедра програмної інженерії
+
+
+
+
+
+
+
+
+ЗВІТ
+з лабораторної роботи №3
+з дисципліни «Архітектура програмного забезпечення» з теми «Web застосунок»
+
+
+
+
+
+
+
+
+
+Виконала:	Перевірив:
+ст. гр. ПЗПІ-22-9	Дашенков Д. С.
+Ковалевич Данііл
+
+
+
+
+
+
+
+
+
+
+
+Харків 2025
+ 
+1.	ІСТОРІЯ ЗМІН
+№	Дата	Версія звіту	Опис змін та виправлень
+1	16.06.2025	0.1	Створено розділи «Завдання» та «Опис»
+2	17.06.2025	1.0	Завершено формування повного звіту
+
+2.	ЗАВДАННЯ
+Розробити front-end частину програмної системи, яка підтримує роботу клієнтів у веб-режимі та забезпечує адміністрування системи.
+Система повинна:
+­	мати окремі інтерфейси для користувачів і адміністраторів;
+­	підтримувати локалізацію (українська та англійська мови);
+­	використовувати формат дати та часу відповідно до обраної мови;
+­	забезпечувати управління користувачами;
+­	реалізувати створення резервних копій та імпорт даних.
+3.	ОПИС ВИКОНАНОЇ РОБОТИ
+У ході виконання лабораторної роботи:
+­	React було обрано як основний інструмент розробки front-end частини;
+­	Реалізовано SPA-застосунок з маршрутизацією (react-router-dom);
+­	Використано бібліотеку i18next для інтернаціоналізації;
+­	Реалізовано окремі інтерфейси:
+1.	користувача (/) з вітанням та кнопкою переходу;
+2.	адміністратора (/admin) з можливістю перегляду, експорту та імпорту користувачів;
+­	Для збереження резервних копій використовується JSON-експорт у файл;
+­	Для імпорту реалізовано обробку файлів .json з локального диска;
+­	Авторизація реалізована через токен, що зберігається в localStorage;
+­	Компонент ProtectedRoute забезпечує захист маршруту /admin;
+­	Візуальний стиль оформлений у світло-фіолетовій тематиці з адаптивним інтерфейсом;
+­	Фронтенд інтегровано з бекендом через REST API (/login, /admin/users).
+4.	ВИСНОВКИ
+У результаті виконання лабораторної роботи:
+­	реалізовано повноцінний web-застосунок з поділом на ролі;
+­	отримано практичні навички роботи з локалізацією, захистом маршрутів і формуванням резервних копій;
+­	виконано всі вимоги завдання;
+­	проєкт готовий до демонстрації та завантаження на GitHub.
+
+Додаток А
+Відеозапис результатів лабораторної роботи:
+https://youtu.be/1MLNEE3uplA
+Додаток Б
+ 
+Рисунок Б.1 — Use Case Diagram (Діаграма прецедентів)
+ 
+Рисунок Б.2 — Component Diagram (Діаграма компонент)
+ 
+Рисунок Б.3 — Activity Diagram (Авторизація + редирект)
+ 
+Рисунок Б.4 — State Diagram (Стан UI користувача)
+ 
+Додаток В
+ПРОГРАМНИЙ КОД
+В.1 Авторизація користувача (бекенд: loginUser)
+1  const loginUser = async (req, res) => {
+ 2    try {
+ 3      const { username, password } = await parseRequestBody(req);
+ 4      const users = await executeQuery(
+ 5        'SELECT * FROM users WHERE username = ? AND password = ?',
+ 6        [username, password]
+ 7      );
+ 8      if (users.length === 0) {
+ 9        res.writeHead(401, CONTENT_TYPE_JSON);
+10        return res.end(JSON.stringify({ message: 'Invalid credentials' }));
+11      }
+12      const user = users[0];
+13      const fakeToken = `token-${user.id}-${Date.now()}`;
+14      res.writeHead(200, CONTENT_TYPE_JSON);
+15      res.end(JSON.stringify({
+16        token: fakeToken,
+17        user: { id: user.id, role: user.role, username: user.username }
+18      }));
+19    } catch (err) {
+20      res.writeHead(500, CONTENT_TYPE_JSON);
+21      res.end(JSON.stringify({ error: err.message }));
+22    }
+23  };
+В.2 Компонент ProtectedRoute (фронтенд)
+Репозиторій: https://github.com/NureKovalevychDaniil/apz-pzpi-22-9-kovalevych-daniil/blob/275eab1d60b03c7c1488f6dba04526bc7e6141c4/Lab3/pzpi-22-9-kovalevych-daniil-lab3/src/components/ProtectedRoute.jsx
+1  import React from 'react';
+ 2  import { Navigate } from 'react-router-dom';
+ 3
+ 4  function ProtectedRoute({ children, roleRequired }) {
+ 5    const token = localStorage.getItem('token');
+ 6    const user = JSON.parse(localStorage.getItem('user'));
+ 7
+ 8    if (!token || !user) {
+ 9      return <Navigate to="/login" />;
+10    }
+11
+12    if (roleRequired && user.role !== roleRequired) {
+13      return <Navigate to="/login" />;
+14    }
+15
+16    return children;
+17  }
+18
+19  export default ProtectedRoute;
+В.3 Резервне копіювання користувачів у JSON (AdminPage.jsx)
+Репозиторій: https://github.com/NureKovalevychDaniil/apz-pzpi-22-9-kovalevych-daniil/blob/275eab1d60b03c7c1488f6dba04526bc7e6141c4/Lab3/pzpi-22-9-kovalevych-daniil-lab3/src/pages/AdminPage.jsx
+1  const saveBackup = () => {
+ 2    const blob = new Blob([JSON.stringify(users, null, 2)], {
+ 3      type: 'application/json'
+ 4    });
+ 5    const link = document.createElement('a');
+ 6    link.href = URL.createObjectURL(blob);
+ 7    link.download = 'backup.json';
+ 8    link.click();
+ 9  };
+В.4 Обробка імпорту JSON (AdminPage.jsx)
+1  const importUsers = (event) => {
+ 2    const file = event.target.files[0];
+ 3    if (!file) return;
+ 4
+ 5    const reader = new FileReader();
+ 6    reader.onload = (e) => {
+ 7      try {
+ 8        const imported = JSON.parse(e.target.result);
+ 9        if (Array.isArray(imported)) {
+10          setUsers(imported);
+11          alert('Імпортовано успішно');
+12        } else {
+13          alert('Невірний формат JSON');
+14        }
+15      } catch {
+16        alert('Помилка при зчитуванні файлу');
+17      }
+18    };
+19    reader.readAsText(file);
+20  };
+
