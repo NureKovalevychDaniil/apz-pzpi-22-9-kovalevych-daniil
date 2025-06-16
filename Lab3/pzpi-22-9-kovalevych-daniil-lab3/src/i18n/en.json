@@ -1,0 +1,8 @@
+{
+  "welcome": "Welcome!",
+  "date": "Today is {{date}}",
+  "backup": "Save Backup",
+  "import": "Import JSON",
+  "adminTitle": "User List",
+  "continue": "Continue"
+}
