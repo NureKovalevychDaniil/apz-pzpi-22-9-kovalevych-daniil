@@ -1,0 +1,141 @@
+Міністерство освіти і науки України
+Харківський національнийуніверситет радіоелектроніки
+
+Кафедра програмної інженерії
+
+
+
+
+
+
+
+
+ЗВІТ
+з лабораторної роботи №2
+з дисципліни «Архітектура програмного забезпечення» з теми «Мобільний застосунок»
+
+
+
+
+
+
+
+
+
+Виконала:	Перевірив:
+ст. гр. ПЗПІ-22-9	Дашенков Д. С.
+Ковалевич Данііл
+
+
+
+
+
+
+
+
+
+
+
+Харків 2025
+ 
+1.	ІСТОРІЯ ЗМІН
+№	Дата	Версія звіту	Опис змін та виправлень
+1	11.06.2025	0.1	Додано розділи «Завдання» та «Опис роботи»
+2	16.06.2025	1.0	Оформлено повний звіт з графікою і кодом
+
+
+2.	ЗАВДАННЯ
+– Розробити мобільний застосунок на Kotlin для Android.
+– Забезпечити інтеграцію з бекендом системи керування транспортом.
+– Реалізувати функціонал перегляду, додавання та видалення машин.
+– Побудувати UML-діаграми та ER-модель мобільної платформи.
+3.	ОПИС ВИКОНАНОЇ РОБОТИ
+– Платформа: Android (Kotlin + Jetpack Compose).
+– Бекенд: Node.js REST API з авторизацією через заголовок.
+– HTTP-клієнт: Retrofit з авторизацією через Interceptor.
+Основний функціонал:
+-	Перегляд списку автомобілів
+-	Додавання нової машини з параметрами
+-	Видалення автомобіля зі списку з підтвердженням
+-	Toast-повідомлення про результат дій
+-	Архітектура: поділ на api, ui, модель.
+-	UML-діаграми:
+-	Use Case (Прецеденти: Додати, Переглянути, Видалити)
+-	Component Diagram (API, View, Network)
+-	ER-діаграма (таблиця Vehicle: id, model, license_plate, year)
+-	Activity Diagram (послідовність дій додавання машини)
+Тестування: робота перевірена на Android-емуляторі з API 33.
+Інтеграція з бекендом: підключення до http://10.0.2.2:8080, передача логіну в заголовку.
+ 
+4.	ВИСНОВКИ
+У результаті виконання лабораторної роботи:
+-	Реалізовано повноцінний мобільний застосунок, який взаємодіє з бекендом.
+-	Отримано практичні навички використання Retrofit, Jetpack Compose та Toast API.
+-	Створено діаграми, що ілюструють архітектуру і логіку застосунку.
+-	Програмне забезпечення відповідає поставленим вимогам.
+Додаток А — Відеозапис
+Демонстрація запуску застосунку:
+https://youtu.be/WV1VJvtCzjM
+Додаток Б — Графічні матеріали
+ 
+UML Use Case Diagram — Рисунок Б.1
+ 
+Component Diagram — Рисунок Б.2
+ 
+ER-модель Vehicle — Рисунок Б.3
+ 
+Activity Diagram додавання машини — Рисунок Б.4
+Додаток В — Програмний код
+В.1 VehicleListScreen.kt (UI логіка)
+Репозиторій: https://github.com/NureKovalevychDaniil/apz-pzpi-22-9-kovalevych-daniil/blob/5f2aa9515f0462356ce1cf5542657d07702d13fb/Lab2/pzpi-22-9-kovalevych-daniil-lab2/app/src/main/java/com/example/pzpi_22_9_kovalevych_daniil_lab2/ui/VehicleListScreen.kt
+1  @OptIn(ExperimentalMaterial3Api::class)
+ 2  @Composable
+ 3  fun VehicleListScreen(modifier: Modifier = Modifier) {
+ 4      val coroutineScope = rememberCoroutineScope()
+ 5      val context = LocalContext.current
+ 6      ...
+ 7      fun loadVehicles() { ... }
+ 8      fun addVehicle(...) { ... }
+ 9      fun deleteVehicle(...) { ... }
+10      ...
+11      Scaffold(...) { ... }
+12  }
+В.2 VehicleApi.kt (API + авторизація)
+Репозиторій: https://github.com/NureKovalevychDaniil/apz-pzpi-22-9-kovalevych-daniil/blob/5f2aa9515f0462356ce1cf5542657d07702d13fb/Lab2/pzpi-22-9-kovalevych-daniil-lab2/app/src/main/java/com/example/pzpi_22_9_kovalevych_daniil_lab2/api/AuthInterceptor.kt
+1  object VehicleApi {
+ 2      private const val BASE_URL = "http://10.0.2.2:8080"
+ 3      private const val USERNAME = "admin"
+ 4      private val client = OkHttpClient.Builder()
+ 5          .addInterceptor(AuthInterceptor(USERNAME))
+ 6          .build()
+ 7      val retrofitService: VehicleService by lazy {
+ 8          Retrofit.Builder()
+ 9              .baseUrl(BASE_URL)
+10              .addConverterFactory(GsonConverterFactory.create())
+11              .client(client)
+12              .build()
+13              .create(VehicleService::class.java)
+14      }
+15  }
+В.3 VehicleService.kt (інтерфейс API)
+Репозиторій: https://github.com/NureKovalevychDaniil/apz-pzpi-22-9-kovalevych-daniil/blob/5f2aa9515f0462356ce1cf5542657d07702d13fb/Lab2/pzpi-22-9-kovalevych-daniil-lab2/app/src/main/java/com/example/pzpi_22_9_kovalevych_daniil_lab2/api/ApiService.kt
+1  interface VehicleService {
+ 2      @GET("/vehicles")
+ 3      suspend fun getVehicles(): List<Vehicle>
+ 4  
+ 5      @POST("/vehicles")
+ 6      suspend fun addVehicle(@Body vehicle: Vehicle)
+ 7  
+ 8      @DELETE("/vehicles/{id}")
+ 9      suspend fun deleteVehicle(@Path("id") id: Int)
+10  }
+В.4 AuthInterceptor.kt (додавання логіну)
+Репозиторій: https://github.com/NureKovalevychDaniil/apz-pzpi-22-9-kovalevych-daniil/blob/5f2aa9515f0462356ce1cf5542657d07702d13fb/Lab2/pzpi-22-9-kovalevych-daniil-lab2/app/src/main/java/com/example/pzpi_22_9_kovalevych_daniil_lab2/api/ApiService.kt
+1  class AuthInterceptor(private val username: String) : Interceptor {
+ 2      override fun intercept(chain: Interceptor.Chain): Response {
+ 3          val request = chain.request().newBuilder()
+ 4              .addHeader("Authorization", username)
+ 5              .build()
+ 6          return chain.proceed(request)
+ 7      }
+ 8  }
